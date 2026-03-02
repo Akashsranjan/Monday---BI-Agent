@@ -1,0 +1,9 @@
+python-dotenv
+requests
+pandas
+mcp
+fastapi
+uvicorn
+deepseek
+openai
+flask

@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>BI Agent</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <style>
+        body {
+            background: #f4f6f9;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .chat-container {
+            width: 80%;
+            height: 90vh;
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .header {
+            padding: 15px;
+            background: #0275d8;
+            color: white;
+            font-size: 20px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: #f9fafb;
+        }
+
+        .msg {
+            padding: 12px 18px;
+            border-radius: 10px;
+            margin-bottom: 12px;
+            max-width: 70%;
+            line-height: 1.5;
+        }
+
+        .user-msg {
+            background: #0275d8;
+            color: white;
+            align-self: flex-end;
+        }
+
+        .bot-msg {
+            background: #eaeaea;
+            color: #222;
+            align-self: flex-start;
+        }
+
+        .input-area {
+            padding: 15px;
+            display: flex;
+            gap: 10px;
+            background: #fff;
+            border-top: 1px solid #ddd;
+        }
+
+        #messageInput {
+            flex: 1;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            font-size: 16px;
+        }
+
+        #sendBtn {
+            padding: 12px 20px;
+            font-size: 16px;
+            background: #0275d8;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        #sendBtn:hover {
+            background: #025aa5;
+        }
+
+        .loading {
+            font-style: italic;
+            color: gray;
+            margin: 10px 0;
+        }
+    </style>
+
+</head>
+<body>
+
+<div class="chat-container">
+    <div class="header">BI Agent – Monday.com Insights</div>
+
+    <div class="messages" id="messages"></div>
+
+    <div class="input-area">
+        <input id="messageInput" type="text" placeholder="Ask something about Work Orders, Deals, or BI..." />
+        <button id="sendBtn">Send</button>
+    </div>
+</div>
+
+
+<script>
+    let sessionId = localStorage.getItem("bi_agent_session");
+
+    if (!sessionId) {
+        sessionId = crypto.randomUUID();
+        localStorage.setItem("bi_agent_session", sessionId);
+    }
+
+    const messagesBox = document.getElementById("messages");
+    const input = document.getElementById("messageInput");
+    const sendBtn = document.getElementById("sendBtn");
+
+    function addMessage(text, sender) {
+        const div = document.createElement("div");
+        div.className = "msg " + (sender === "user" ? "user-msg" : "bot-msg");
+        div.textContent = text;
+        messagesBox.appendChild(div);
+        messagesBox.scrollTop = messagesBox.scrollHeight;
+    }
+
+    async function sendMessage() {
+        const userMsg = input.value.trim();
+        if (!userMsg) return;
+
+        addMessage(userMsg, "user");
+        input.value = "";
+
+        const loading = document.createElement("div");
+        loading.className = "loading";
+        loading.innerText = "Thinking...";
+        messagesBox.appendChild(loading);
+        messagesBox.scrollTop = messagesBox.scrollHeight;
+
+        try {
+            const res = await fetch("/api/query", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({
+                    message: userMsg,
+                    session_id: sessionId
+                })
+            });
+
+            const data = await res.json();
+            messagesBox.removeChild(loading);
+
+            if (data.answer) {
+                addMessage(data.answer, "bot");
+            } else {
+                addMessage("Error: " + (data.error || "Unknown error"), "bot");
+            }
+
+        } catch (err) {
+            messagesBox.removeChild(loading);
+            addMessage("Network error: " + err.message, "bot");
+        }
+    }
+
+    sendBtn.onclick = sendMessage;
+    input.addEventListener("keypress", (e) => {
+        if (e.key === "Enter") sendMessage();
+    });
+</script>
+
+</body>
+</html>
