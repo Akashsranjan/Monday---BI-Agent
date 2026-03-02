@@ -9,7 +9,7 @@ from src.utils.logger import app_log
 
 app = Flask(
     __name__,
-    template_folder="Frontend",
+    template_folder="Frontend/templates",
     static_folder="Frontend/static",
 )
 
