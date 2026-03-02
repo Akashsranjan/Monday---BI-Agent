@@ -7,3 +7,4 @@ uvicorn
 deepseek
 openai
 flask
+gunicorn
