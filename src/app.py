@@ -9,8 +9,8 @@ from src.utils.logger import app_log
 
 app = Flask(
     __name__,
-    template_folder="frontend/templates",
-    static_folder="frontend/static",
+    template_folder="Frontend",
+    static_folder="Frontend/static",
 )
 
 _sessions: dict[str, QueryAgent] = {}
